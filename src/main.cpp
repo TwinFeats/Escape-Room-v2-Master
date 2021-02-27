@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
-#define PJON_MAX_PACKETS 2
+#define PJON_MAX_PACKETS 4
 #define PJON_PACKET_MAX_LENGTH 33
 #include <PJONSoftwareBitBang.h>
 #include <LiquidCrystal.h>
