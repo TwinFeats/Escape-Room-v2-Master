@@ -14,74 +14,29 @@
 
 LiquidCrystal lcd(52, 50, 42, 44, 46, 48);
 
+#define PIN_COUNTDOWN_CLK    1
+#define PIN_COUNTDOWN_DIO    2
+#define PIN_LCD_RS           3
+#define PIN_MP3_BUSY         4
+#define PIN_MP3_TX           5
+#define PIN_MP3_RX           6
+#define PIN_LCD_E            7
+#define PIN_LCD_D4           8
+#define PIN_LCD_D5           9
+#define PIN_TONE             10
+#define PIN_LCD_D6           11
+#define PIN_LCD_D7           12
+#define PIN_COMM             13
+
+
+//analog
+#define PIN_MP3_VOLUME      A1
+#define PIN_TONE_VOLUME     A2
+#define PIN_LED_BRIGHTNESS  A3
+
+
 // Lock combo is 4219
 
-/*
- * PINS:
- * 2 - Mastermind LED
- * 3 - Blackbox LED (inner)
- * 4 - Audio RX
- * 5 - Audio TX
- * 6 - Panel 1 indicator
- * 7 - Panel 2 indicator
- * 8 - Panel 3 indicator
- * 9 - Panel 4 indicator
- * 10 - Tone OUT
- * 11 - DFPlayer busy in
- * 12 - Color sensor LED
- * 13 - Card reader button
- *
- * 14 -
- * 15 -
- * 16 -
- * 17 -
- *
- * 18 - DFMini TX
- * 19 - DFMini RX
- * 20 SDA - Color sensor
- * 21 SCL - Color sensor
- *
- * 22 - Mastermind Button 1
- * 23 - Mastermind Button 2
- * 24 - Mastermind Button 3
- * 25 - Mastermind Button 4
- * 26 - Mastermind Button 5
- * 27 - Mastermind ENTER
- * 28 - Switch 1
- * 29 - Switch 2
- * 30 - Switch 3
- * 31 - Switch 4
- * 32 - Switch 5
- * 33 - Switch 6
- * 34 - Tone 1 button
- * 35 - Tone 2 button
- * 36 - Tone 3 button
- * 37 - Tone 4 button
- * 38 - Tone 5 button
- * 39 - DEAD
- * 40 - Tone Play
- * 41 - Countdown DIO
- * 42 - LCD D4
- * 43 - Countdown CLK
- * 44 - LCD D5
- * 45 - Blackbox BEAM button
- * 46 - LCD D6
- * 47 - BlackBox GUESS button
- * 48 - LCD D7
- * 49 - Case Open/Close
- * 50 - LCD E
- * 51 - BlackBox place marker button
- * 52 - LCD RS
- * 53 - Blackbox LED (outer)
- *
- * A1 - LED Brightness
- * A2 - Blackbox beam X
- * A3 - Blackbox beam Y
- * A4 - Blackbox marker X
- * A5 - Blackbox marker Y
- * A6 - MP3 volume
- *
- */
 Timer<1> brightnessTimer;
 int lastBrightness = 0;
 
@@ -104,10 +59,8 @@ void gameOver() {
  * ----------------Countdown timer ------------------------
  */
 
-#define COUNTDOWN_CLK 43
-#define COUNTDOWN_DIO 41
 Timer<1> timer;
-TM1637TinyDisplay clock(COUNTDOWN_CLK, COUNTDOWN_DIO);
+TM1637TinyDisplay clock(PIN_COUNTDOWN_CLK, PIN_COUNTDOWN_DIO);
 
 int countdownSecs = 60 * 60;
 boolean countdownRunning = false;  // starts when case is closed then opened
@@ -160,7 +113,6 @@ void initClock() {
 /* --------------------END countdown timer------------------ */
 
 /* -------------------- DFPlayer -----------------------------*/
-#define mp3BusyPin 11
 
 DFRobotDFPlayerMini mp3Player;
 
@@ -206,20 +158,20 @@ void playInfoThenTrack(int track) {
 }
 
 boolean checkMp3Busy(void* t) {
-  mp3Playing = (digitalRead(mp3BusyPin) == LOW);
+  mp3Playing = (digitalRead(PIN_MP3_BUSY) == LOW);
   if (!mp3Playing) {
     checkMp3Queue();
   }
   return true;
 }
 
-SoftwareSerial mp3Serial(10, 11); // RX, TX
+SoftwareSerial mp3Serial(PIN_MP3_RX, PIN_MP3_TX); // RX, TX
 void initMP3Player() {
   mp3Serial.begin(9600);
   mp3Player.begin(mp3Serial);
   mp3Player.volume(30);
   mp3Player.play(3);
-  pinMode(mp3BusyPin, INPUT);
+  pinMode(PIN_MP3_BUSY, INPUT);
   mp3Timer.every(1000, checkMp3Busy);
 }
 
@@ -323,22 +275,7 @@ void initGameState() {
 /* -----------------END GAME STATE ----------------------------*/
 
 
-/* ----------------- TONES -------------------------*/
-#define TONE_BUTTON_1 34
-#define TONE_BUTTON_2 35
-#define TONE_BUTTON_3 36
-#define TONE_BUTTON_4 37
-#define TONE_BUTTON_5 38
-#define TONE_PIN 10
-#define TONE_PLAY 40
-
 Tone tonePlayer;
-ButtonDebounce tone1(TONE_BUTTON_1, 100);
-ButtonDebounce tone2(TONE_BUTTON_2, 100);
-ButtonDebounce tone3(TONE_BUTTON_3, 100);
-ButtonDebounce tone4(TONE_BUTTON_4, 100);
-ButtonDebounce tone5(TONE_BUTTON_5, 100);
-ButtonDebounce tonePlay(TONE_PLAY, 100);
 
 int notes[] = {NOTE_C6, NOTE_D6, NOTE_E6, NOTE_F6, NOTE_G6};
 
@@ -359,46 +296,6 @@ void checkNotes() {
   gameState++;
 }
 
-void tone1Pressed(const int state) {
-  if (gameState == MODEM && numNotesPlayed < NOTES_LENGTH) {
-    tonePlayer.play(notes[0]);
-    notes[numNotesPlayed++] = 0;
-    checkNotes();
-  }
-}
-
-void tone2Pressed(const int state) {
-  if (gameState == MODEM && numNotesPlayed < NOTES_LENGTH) {
-    tonePlayer.play(notes[1]);
-    notes[numNotesPlayed++] = 0;
-    checkNotes();
-  }
-}
-
-void tone3Pressed(const int state) {
-  if (gameState == MODEM && numNotesPlayed < NOTES_LENGTH) {
-    tonePlayer.play(notes[2]);
-    notes[numNotesPlayed++] = 0;
-    checkNotes();
-  }
-}
-
-void tone4Pressed(const int state) {
-  if (gameState == MODEM && numNotesPlayed < NOTES_LENGTH) {
-    tonePlayer.play(notes[3]);
-    notes[numNotesPlayed++] = 0;
-    checkNotes();
-  }
-}
-
-void tone5Pressed(const int state) {
-  if (gameState == MODEM && numNotesPlayed < NOTES_LENGTH) {
-    tonePlayer.play(notes[4]);
-    notes[numNotesPlayed++] = 0;
-    checkNotes();
-  }
-}
-
 bool playNextNote(int note) {
   tonePlayer.play(notes[note++]);
   if (note < 5) {
@@ -411,26 +308,8 @@ bool playNextNote(int note) {
   return false;
 }
 
-void tonePlayPressed(const int state) {
-  if (gameState == MODEM) {
-    toneTimer.in(1000, playNextNote, 0);
-  }
-}
-
 void initTone() {
-  pinMode(TONE_BUTTON_1, INPUT_PULLUP);
-  pinMode(TONE_BUTTON_2, INPUT_PULLUP);
-  pinMode(TONE_BUTTON_3, INPUT_PULLUP);
-  pinMode(TONE_BUTTON_4, INPUT_PULLUP);
-  pinMode(TONE_BUTTON_5, INPUT_PULLUP);
-  pinMode(TONE_PLAY, INPUT_PULLUP);
-  tone1.setCallback(tone1Pressed);
-  tone2.setCallback(tone2Pressed);
-  tone3.setCallback(tone3Pressed);
-  tone4.setCallback(tone4Pressed);
-  tone5.setCallback(tone5Pressed);
-  tonePlay.setCallback(tonePlayPressed);
-  tonePlayer.begin(TONE_PIN);
+  tonePlayer.begin(PIND);
   for (int i = 0; i < NOTES_LENGTH; i++) {
     song[i] = random(5);
   }
@@ -507,7 +386,7 @@ void commReceive(uint8_t *data, uint16_t len, const PJON_Packet_Info &info) {
 }
 
 void initCommsBus() {
-  bus.strategy.set_pin(13);
+  bus.strategy.set_pin(PIN_COMM);
   bus.include_sender_info(false);
   bus.set_error(error_handler);
   bus.set_receiver(commReceive);
