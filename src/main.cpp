@@ -14,10 +14,11 @@
 
 LiquidCrystal lcd(52, 50, 42, 44, 46, 48);
 
-#define PIN_COUNTDOWN_CLK    1
-#define PIN_COUNTDOWN_DIO    2
-#define PIN_LCD_RS           3
+#define PIN_COUNTDOWN_CLK    2
+#define PIN_COUNTDOWN_DIO    3
+#define PIN_LCD_RS           A7
 #define PIN_MP3_BUSY         4
+//TX of nano, RX of MP3
 #define PIN_MP3_TX           5
 #define PIN_MP3_RX           6
 #define PIN_LCD_E            7
@@ -31,7 +32,7 @@ LiquidCrystal lcd(52, 50, 42, 44, 46, 48);
 
 //analog
 #define PIN_MP3_VOLUME      A1
-#define PIN_TONE_VOLUME     A2
+//#define PIN_TONE_VOLUME     A2
 #define PIN_LED_BRIGHTNESS  A3
 
 
@@ -309,7 +310,7 @@ bool playNextNote(int note) {
 }
 
 void initTone() {
-  tonePlayer.begin(PIND);
+  tonePlayer.begin(PIN_TONE);
   for (int i = 0; i < NOTES_LENGTH; i++) {
     song[i] = random(5);
   }
