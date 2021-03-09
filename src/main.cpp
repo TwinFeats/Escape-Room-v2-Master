@@ -12,28 +12,28 @@
 #include <ButtonDebounce.h>
 #include <tracks.h>
 
-LiquidCrystal lcd(52, 50, 42, 44, 46, 48);
 
 #define PIN_COUNTDOWN_CLK    2
 #define PIN_COUNTDOWN_DIO    3
-#define PIN_LCD_RS           A7
-#define PIN_MP3_BUSY         4
+#define PIN_LCD_RS           4
+#define PIN_LCD_E            5
+#define PIN_LCD_D4           6
+#define PIN_LCD_D5           7
+#define PIN_LCD_D6           8
+#define PIN_LCD_D7           9
 //TX of nano, RX of MP3
-#define PIN_MP3_TX           5
-#define PIN_MP3_RX           6
-#define PIN_LCD_E            7
-#define PIN_LCD_D4           8
-#define PIN_LCD_D5           9
-#define PIN_TONE             10
-#define PIN_LCD_D6           11
-#define PIN_LCD_D7           12
-#define PIN_COMM             13
+#define PIN_MP3_TX           10
+#define PIN_MP3_RX           11
+#define PIN_MP3_BUSY         12
 
+#define PIN_COMM             13
+#define PIN_TONE             A4
+
+LiquidCrystal lcd(PIN_LCD_RS, PIN_LCD_E, PIN_LCD_D4, PIN_LCD_D5, PIN_LCD_D6, PIN_LCD_D7);
 
 //analog
-#define PIN_MP3_VOLUME      A1
-//#define PIN_TONE_VOLUME     A2
-#define PIN_LED_BRIGHTNESS  A3
+#define PIN_MP3_VOLUME      A6
+#define PIN_LED_BRIGHTNESS  A2
 
 
 // Lock combo is 4219
@@ -118,9 +118,18 @@ void initClock() {
 DFRobotDFPlayerMini mp3Player;
 
 Timer<1> mp3Timer;
+Timer<1> mp3Volume;
+
 int mp3Queue[10];
 int mp3Count = 0;
 boolean mp3Playing = false;
+
+boolean checkMp3Volume(void* t) {
+  int val = analogRead(PIN_MP3_VOLUME);
+  val = map(val, 0, 1023, 0, 30);
+  mp3Player.volume(val);
+  return true;
+}
 
 void checkMp3Queue() {
   if (mp3Count > 0) {
@@ -170,10 +179,10 @@ SoftwareSerial mp3Serial(PIN_MP3_RX, PIN_MP3_TX); // RX, TX
 void initMP3Player() {
   mp3Serial.begin(9600);
   mp3Player.begin(mp3Serial);
-  mp3Player.volume(30);
-  mp3Player.play(3);
+  mp3Player.volume(15);
   pinMode(PIN_MP3_BUSY, INPUT);
   mp3Timer.every(1000, checkMp3Busy);
+  mp3Volume.every(337, checkMp3Volume);
 }
 
 
@@ -190,16 +199,9 @@ byte arrowDown[8] = {
 
 Timer<1> lcdTimer;
 int msgCount = 0;
-char msgLine1Queue[10][16];
-char msgLine2Queue[10][16];
-char msgBuffer[17];
+char msgLine1Queue[10][17];
+char msgLine2Queue[10][17];
 
-// char *mallocStringLiteral(const char *str, int len) {
-//   char *string = (char *)malloc(len+1);
-//   strncpy(string, str, len);
-//   string[len] = 0;
-//   return string;
-// }
 
 bool checkMsgQueue(void* t) {
   if (msgCount > 0) {
@@ -208,13 +210,11 @@ bool checkMsgQueue(void* t) {
     lcd.print(msgLine1Queue[0]);
     lcd.setCursor(0, 1);
     lcd.print(msgLine2Queue[0]);
+    Serial.println(msgLine1Queue[0]);
+    Serial.println(msgLine2Queue[0]);
 
     memmove(msgLine1Queue[0], msgLine1Queue[1], 144);
     memmove(msgLine2Queue[0], msgLine2Queue[1], 144);
-    // for (int i=1;i<msgCount;i++) {
-    //   msgLine1Queue[i-1] = msgLine1Queue[i];
-    //   msgLine2Queue[i-1] = msgLine2Queue[i];
-    // }
     msgCount--;
     lcdTimer.in(5000, checkMsgQueue); //schedule next msg check
   }
@@ -222,11 +222,11 @@ bool checkMsgQueue(void* t) {
 }
 
 void queueMsg(char *line1, char *line2) {
+  Serial.println("queueMsg");
+  Serial.println(msgCount);
   if (msgCount < 10) {
-    memcpy(msgLine1Queue[msgCount], line1, 16);
-    memcpy(msgLine2Queue[msgCount], line2, 16);
-    // msgLine1Queue[msgCount] = line1;
-    // msgLine2Queue[msgCount++] = line2;
+    memcpy(msgLine1Queue[msgCount], line1, 17);
+    memcpy(msgLine2Queue[msgCount++], line2, 17);
     if (msgCount == 1) {  //only one msg, display it now
       checkMsgQueue(NULL);
     }
@@ -237,6 +237,8 @@ void queueMsg(char *line1, char *line2) {
 }
 
 void initLcd() {
+  memset(msgLine1Queue, 0, 170);
+  memset(msgLine2Queue, 0, 170);
 //  lcdTimer.every(3000, checkMsgQueue);
 }
 
@@ -396,8 +398,6 @@ void initCommsBus() {
 
 void setup() {
   Serial.begin(9600);
-   while (!Serial)
-     ;  // wait for serial attach
   Serial.println("Starting");
   initCommsBus();
   lcd.begin(16, 2);
@@ -413,10 +413,14 @@ void setup() {
   initTone();
   initMP3Player();
 
-  gameState = REACTOR_CORE;
-  //  reportSwitches();
-  // reportKeycode();
+//  gameState = REACTOR_CORE;
+//    reportSwitches();
+  // countdownRunning = true;
+  // queueMsg("Hi", "There");
+   playTrack(3);
+//   tonePlayer.play(notes[0], 10000);
 }
+
 
 void loop() {
   toneTimer.tick();
@@ -424,6 +428,7 @@ void loop() {
   brightnessTimer.tick();
   lcdTimer.tick();
   mp3Timer.tick();
+  mp3Volume.tick();
   bus.update();
   bus.receive(750);  //try to receive for .75 ms
   if (isGameOver) {
