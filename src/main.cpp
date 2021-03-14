@@ -2,7 +2,7 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #define PJON_MAX_PACKETS 4
-#define PJON_PACKET_MAX_LENGTH 33
+#define PJON_PACKET_MAX_LENGTH 52
 #include <PJONSoftwareBitBang.h>
 #include <LiquidCrystal.h>
 #include <TM1637TinyDisplay.h>
@@ -14,7 +14,7 @@
 
 
 #define PIN_COUNTDOWN_CLK    2
-#define PIN_COUNTDOWN_DIO    3
+#define PIN_COUNTDOWN_DIO    A3
 #define PIN_LCD_RS           4
 #define PIN_LCD_E            5
 #define PIN_LCD_D4           6
@@ -23,17 +23,24 @@
 #define PIN_LCD_D7           9
 //TX of nano, RX of MP3
 #define PIN_MP3_TX           10
-#define PIN_MP3_RX           11
+#define PIN_MP3_RX           A1
 #define PIN_MP3_BUSY         12
 
 #define PIN_COMM             13
 #define PIN_TONE             A4
 
 LiquidCrystal lcd(PIN_LCD_RS, PIN_LCD_E, PIN_LCD_D4, PIN_LCD_D5, PIN_LCD_D6, PIN_LCD_D7);
+PJON<SoftwareBitBang> bus(1);
 
 //analog
 #define PIN_MP3_VOLUME      A6
 #define PIN_LED_BRIGHTNESS  A2
+
+#define COMM_ID_SWITCHES      10
+#define COMM_ID_MODEM         11
+#define COMM_ID_FIREWALL      12
+#define COMM_ID_CONTROL_ROOM  13
+#define COMM_ID_REACTOR       14
 
 
 // Lock combo is 4219
@@ -210,25 +217,29 @@ bool checkMsgQueue(void* t) {
     lcd.print(msgLine1Queue[0]);
     lcd.setCursor(0, 1);
     lcd.print(msgLine2Queue[0]);
-    Serial.println(msgLine1Queue[0]);
-    Serial.println(msgLine2Queue[0]);
+    // Serial.println(msgLine1Queue[0]);
+    // Serial.println(msgLine2Queue[0]);
 
-    memmove(msgLine1Queue[0], msgLine1Queue[1], 144);
-    memmove(msgLine2Queue[0], msgLine2Queue[1], 144);
+    memmove(msgLine1Queue[0], msgLine1Queue[1], 153);
+    memmove(msgLine2Queue[0], msgLine2Queue[1], 153);
     msgCount--;
-    lcdTimer.in(5000, checkMsgQueue); //schedule next msg check
+    return msgCount > 0;
   }
-  return false; //one-shot only
+  return false;
 }
 
-void queueMsg(char *line1, char *line2) {
-  Serial.println("queueMsg");
-  Serial.println(msgCount);
+void queueMsg(const char *line1, const char *line2) {
+  // Serial.println("queueMsg");
+  // Serial.println(msgCount);
   if (msgCount < 10) {
     memcpy(msgLine1Queue[msgCount], line1, 17);
     memcpy(msgLine2Queue[msgCount++], line2, 17);
     if (msgCount == 1) {  //only one msg, display it now
       checkMsgQueue(NULL);
+    } else {
+      if (lcdTimer.empty()) {
+        lcdTimer.every(5000, checkMsgQueue); //schedule next msg check
+      } // no else, when the timer pops it will pick up the next msg in queue
     }
   } else {
     overridePlay(TRACK_HACK_ATTEMPT_DETECTED);
@@ -283,49 +294,27 @@ Tone tonePlayer;
 int notes[] = {NOTE_C6, NOTE_D6, NOTE_E6, NOTE_F6, NOTE_G6};
 
 #define NOTES_LENGTH 15
-uint8_t numNotesPlayed = 0;
-int song[NOTES_LENGTH];
+uint8_t song[NOTES_LENGTH];
 int notesPlayed[NOTES_LENGTH];
-boolean modemComplete = false;
-Timer<1, millis, int> toneTimer;
+Timer<1> toneTimer;
+int nextNote = 0;
 
-void checkNotes() {
-  if (numNotesPlayed != NOTES_LENGTH) return;
-  for (int i = 0; i < NOTES_LENGTH; i++) {
-    if (notesPlayed[i] != song[i]) return;
-  }
-  playInfoThenTrack(TRACK_MODEM_ACQUIRED);
-  modemComplete = true;
-  gameState++;
-}
-
-bool playNextNote(int note) {
-  tonePlayer.play(notes[note++]);
-  if (note < 5) {
-    toneTimer.in(1000, playNextNote, note);
+bool playNextNote(void* t) {
+  tonePlayer.play(notes[song[nextNote++]], 250);
+  if (nextNote < NOTES_LENGTH) {
+    return true;
   } else {
-    Serial.println("stop");
-    numNotesPlayed = 0;
-    tonePlayer.stop();
+    nextNote = 0;
+    // tonePlayer.stop();
   }
   return false;
 }
 
 void initTone() {
   tonePlayer.begin(PIN_TONE);
-  for (int i = 0; i < NOTES_LENGTH; i++) {
-    song[i] = random(5);
-  }
 }
 /* --------------END TONES -------------------------*/
-#define COMM_ID_SWITCHES      10
-#define COMM_ID_MODEM         11
-#define COMM_ID_FIREWALL      12
-#define COMM_ID_CONTROL_ROOM  13
-#define COMM_ID_REACTOR       14
-
 int commIds[] = {COMM_ID_MODEM, COMM_ID_FIREWALL, COMM_ID_CONTROL_ROOM, COMM_ID_REACTOR};
-PJON<SoftwareBitBang> bus(1);
 
 void error_handler(uint8_t code, uint16_t data, void *custom_pointer) {
   if(code == PJON_CONNECTION_LOST) {
@@ -335,16 +324,28 @@ void error_handler(uint8_t code, uint16_t data, void *custom_pointer) {
 }
 
 void commReceive(uint8_t *data, uint16_t len, const PJON_Packet_Info &info) {
+  Serial.print("commReceive ");
+  Serial.println((char *)data);
   char line1[17], line2[17];
   switch(data[0]) {
     case 'L':  //LCD msg
-      queueMsg((char *)&data[1],(char *)&data[17]);
+      queueMsg((char *)&data[1],(char *)&data[18]);
       break;
     case 'T':  //Play tone
-      tonePlayer.play(notes[data[1]], 1000);
+      tonePlayer.play(notes[data[1]], 250);
       break;
     case 'P': //Play tone song
-      playNextNote(0);
+      nextNote = 0;
+      toneTimer.every(270, playNextNote);
+//      playNextNote(NULL);
+      break;
+    case 'S': //Store song
+      memcpy(song, &data[1], NOTES_LENGTH);
+      for (int i=0;i<NOTES_LENGTH;i++) {
+        sprintf(&line2[i], "%i", song[i]);
+      }
+      sprintf(line1, "%-16s", "Song");
+      queueMsg(line1,line2);
       break;
     case 'M':  //Play MP3
       playTrack(data[1]);
@@ -390,7 +391,6 @@ void commReceive(uint8_t *data, uint16_t len, const PJON_Packet_Info &info) {
 
 void initCommsBus() {
   bus.strategy.set_pin(PIN_COMM);
-  bus.include_sender_info(false);
   bus.set_error(error_handler);
   bus.set_receiver(commReceive);
   bus.begin();
@@ -407,7 +407,7 @@ void setup() {
   randomSeed(analogRead(0));
   initGameState();
   clock.setBrightness(7);
-  countdownRunning = true;
+  countdownRunning = false;
   timer.every(1000, updateCountdown);
   brightnessTimer.every(100, checkBrightness);
   initTone();
@@ -417,7 +417,7 @@ void setup() {
 //    reportSwitches();
   // countdownRunning = true;
   // queueMsg("Hi", "There");
-   playTrack(3);
+//   playTrack(3);
 //   tonePlayer.play(notes[0], 10000);
 }
 
