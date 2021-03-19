@@ -31,10 +31,10 @@ Also included in the case are documents for each panel (in Russian!), a pen and 
   duplicate. There are 15 notes in the random song.</dl>
 
   <dt>Firewall</dt>
-  <dl>Once the modem is connected, the firewall must be breeched. This is a "Mastermind"-style puzzle of 5 positions of 8 different colors.</dl>
+  <dl>Once the modem is connected, the firewall must be breeched. This is a "Mastermind"-style puzzle of 5 positions and 8 different colors.</dl>
   
   <dt>Nuclear Safeguard Panel</dt>
-  <dl>After breeching the firewall, the player(s) must deactive the nuclear safeguard controller. This is game with 8 colored keycards that must
+  <dl>After breeching the firewall, the player(s) must deactivate the nuclear safeguard controller. This is game with 8 colored keycards that must
   be inserted into the card reader in the proper order.</dl>
   
   <dt>Reactor Control Rods</dt>
