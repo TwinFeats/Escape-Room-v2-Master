@@ -95,7 +95,8 @@ Each panel contains an Arduino Nano as the controller, and:
 
 In addition, the lid has a magnetic reed switch to determine whether the case is open or closed, as well as
 a Wyze Cam v2 to record/broadcast the players in the game. The camera turns on when the case is opened and
-shuts down when the case is closed
+shuts down when the case is closed. The individual panels are, in general, connected by 3 wires: +5v, ground, and a single wire PJON
+communication wire. The PJON wire is used to send messages between panels as necessary.
 
 <h2>Software Design</h2>
 Since each panel has its own Arduino Nano to control its operations, each panel also has its own software project (siblings to this Github project). Those projects are:
@@ -115,3 +116,9 @@ As you can tell, I'm a model of strict naming conventions. ;)
   just confusingly enough different than Java that I didn't want to confuse myself, so I stuck with straight C (which I also used to code years ago). The
   source code itself is heavily commented so I won't go further into details here, just look through the source for more information.
 
+<h2>Game Setup Overview</h2>
+When the battery is connected the system will generate all the random switch settings for the 5 panels. These will then be displayed at 10 second intervals
+on the LCD display in order for the gamemaster to write them down. The display will then blank, and the gamemaster will put the switch positions into their
+respective 3d-printed puzzle boxes. The case may then be closed, at which time it is automatically "armed". This is a lower-power state for the case and
+the 6700 mah battery will last for about 30 hours before it is exhausted, but the game must begin within no more than about 3 hours to ensure enough
+battery for a game to be completed. When the case is next opened the player(s) will hear an introductory audio file, and then the 60 minute countdown starts.
