@@ -98,7 +98,7 @@ a Wyze Cam v2 to record/broadcast the players in the game. The camera turns on w
 shuts down when the case is closed
 
 <h2>Software Design</h2>
-Since each panel has its own Arduino Nano to control its operations, each panel also has its own software project. Those projects are:
+Since each panel has its own Arduino Nano to control its operations, each panel also has its own software project (siblings to this Github project). Those projects are:
 
 <ul>
   <li>Escape Room v2 Master</li>
