@@ -19,7 +19,7 @@ The case contains six 3d printed puzzle boxes, six 3d printed game panels, and e
 Also included in the case are documents for each panel (in Russian!), a pen and paper and a Samsung tablet with Google Translate installed. The panels are:
 <dl>
   <dt>Message Center</dt>
-  <dl>This panel contains the game clock, speakers for audio messages, the 2x16 LCD screen for text messages, volumne and brightness
+  <dl>This panel contains the game clock, speakers for audio messages, the 2x16 LCD screen for text messages, volume and brightness
   controls, and a repeat last audio message button.</dl>
   
   <dt>Control Switch Panel</dt>
