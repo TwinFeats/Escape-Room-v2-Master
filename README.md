@@ -91,4 +91,25 @@ Each panel contains an Arduino Nano as the controller, and:
   </ul></dl>
 </dl>
 
+In addition, the lid has a magnetic reed switch to determine whether the case is open or closed, as well as
+a Wyze Cam v2 to record/broadcast the players in the game. The camera turns on when the case is opened and
+shuts down when the case is closed
+
+<h2>Software Design</h2>
+Since each panel has its own Arduino Nano to control its operations, each panel also has its own software project. Those projects are:
+
+<ul>
+  <li>Escape Room v2 Master</li>
+  <li>Escape Case Switches</li>
+  <li>Escape Case Modem</li>
+  <li>Escape Escape Case Firewall</li>
+  <li>Escape Room Control Room</li>
+  <li>Escape Room Reactor</li>
+</ul>
+
+As you can tell, I'm a model of strict naming conventions. ;)
+
+<p>The code is all written is C and not C++ for one simple reason - I'm a full stack Java developer and C++ (which I used to code in years ago) has a syntax
+  just confusingly enough different than Java that I didn't want to confuse myself, so I stuck with straight C (which I also used to code years ago). The
+  source code itself is heavily commented so I won't go further into details here, just look through the source for more information.
 
