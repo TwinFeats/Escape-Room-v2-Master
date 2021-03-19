@@ -43,6 +43,7 @@ Also included in the case are documents for each panel (in Russian!), a pen and 
 </dl>
 
 <h2>Hardware Design</h2>
+The entire case is powered by a 6700 mah battery with a max output of 2.4a, which should provide power for 4-6 hours given an estimated max power draw of 1-1.5a.
 Each panel contains an Arduino Nano as the controller, and:
 <dl>
   <dt>Message Center</dt>
