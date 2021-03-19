@@ -113,7 +113,7 @@ Since each panel has its own Arduino Nano to control its operations, each panel 
 As you can tell, I'm a model of strict naming conventions. ;)
 
 <p>The code is all written is C and not C++ for one simple reason - I'm a full stack Java developer and C++ (which I used to code in years ago) has a syntax
-  just confusingly enough different than Java that I didn't want to confuse myself, so I stuck with straight C (which I also used to code years ago). The
+  just different enough from Java that I didn't want to confuse myself, so I stuck with straight C (which I also used to code years ago). The
   source code itself is heavily commented so I won't go further into details here, just look through the source for more information.
 
 <h2>Game Setup Overview</h2>
