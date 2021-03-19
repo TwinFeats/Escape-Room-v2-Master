@@ -14,8 +14,8 @@ a Russian satellite nuclear weapon.
 <p><img src="http://twinfeats.com/tf/starfield/case1.jpg"/></p>
 
 <h2>Game Design</h2>
-The case contains 6 3d printed puzzle boxes, six 3d printed game panels, and 8 3d printed cards for the card reader.
-Also included in the case are a pen and paper and a Samsung tablet with Google Translate installed. The panels are:
+The case contains six 3d printed puzzle boxes, six 3d printed game panels, and eight 3d printed cards for the card reader.
+Also included in the case are documents for each panel (in Russian!), a pen and paper and a Samsung tablet with Google Translate installed. The panels are:
 <dl>
   <dt>Message Center</dt>
   <dl>This panel contains the game clock, speakers for audio messages, the 2x16 LCD screen for text messages, volumne and brightness
