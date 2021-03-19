@@ -11,16 +11,18 @@ remain that way.
 Players are in the role of MI6 operatives who have been given the task of figuring out how to use the contents of the case to destroy
 a Russian satellite nuclear weapon.
 
-<h2>Game Design</h2>
-The case contains six 3d printed panels:
 <p><img src="http://twinfeats.com/tf/starfield/case1.jpg"/></p>
+
+<h2>Game Design</h2>
+The case contains 6 3d printed puzzle boxes, six 3d printed game panels, and 8 3d printed cards for the card reader.
+Also included in the case are a pen and paper and a Samsung tablet with Google Translate installed. The panels are:
 <dl>
   <dt>Message Center</dt>
   <dl>This panel contains the game clock, speakers for audio messages, the 2x16 LCD screen for text messages, volumne and brightness
   controls, and a repeat last audio message button.</dl>
   
   <dt>Control Switch Panel</dt>
-  <dl>Each panel other than the message center must be activated in order. The control switch panel itself is first used to power up the
+  <dl>Each panel other than the message center must be activated in order. The control switch panel itself is first used to "power up" the
   system, and then the other primary game panels in turn. The switch positions for each panel are contained in the 3d printed puzzle boxes.</dl>
   
   <dt>Satellite Modem</dt>
@@ -54,23 +56,39 @@ Each panel contains an Arduino Nano as the controller, and:
   </ul></dl>
   
   <dt>Control Switch Panel</dt>
-  <dl>Each panel other than the message center must be activated in order. The control switch panel itself is first used to power up the
-  system, and then the other primary game panels in turn. The switch positions for each panel are contained in the 3d printed puzzle boxes.</dl>
+  <dl><ul>
+  <li>6 toggle switches</li>
+  <li>LED light panel underneath the panel title.</li>
+  </ul></dl>
   
   <dt>Satellite Modem</dt>
-  <dl>This is a tone-based puzzle with 6 buttons: 1 each for the 5 different tones and one to play the song that the player is trying to
-  duplicate. There are 15 notes in the random song.</dl>
+  <dl><ul>
+  <li>6 x push buttons</li>
+  <li>LED light panel underneath the panel title.</li>
+  </ul></dl>
 
   <dt>Firewall</dt>
-  <dl>Once the modem is connected, the firewall must be breeched. This is a "Mastermind"-style puzzle of 5 positions of 8 different colors.</dl>
+  <dl><ul>
+  <li>6 x push buttons</li>
+  <li>5 x APA-106 Neopixels</li>
+  <li>LED light panel underneath the panel title.</li>
+  </ul></dl>
   
   <dt>Nuclear Safeguard Panel</dt>
-  <dl>After breeching the firewall, the player(s) must deactive the nuclear safeguard controller. This is game with 8 colored keycards that must
-  be inserted into the card reader in the proper order.</dl>
+  <dl><ul>
+  <li>TCS34725 color sensor</li>
+  <li>TCRT5000 IR reflective sensor</li>
+  <li>LED light panel underneath the panel title.</li>
+  </ul></dl>
   
   <dt>Reactor Control Rods</dt>
-  <dl>This is a "Blackbox"-style game where the players send in gamma rays into a blackbox and observe where the rays exit. They must use this information
-  to deduce where the control rods are in order to misalign them, which will engage the Starfield self-destruct.</dl>
+  <dl><ul>
+  <li>32 x APA-106 Neopixels</li>
+  <li>1 x 64 Neopixel (8x8) panel</li>
+  <li>2 Analog joysticks w/integrated push button on the stick</li>
+  <li>1 push button</li>
+  <li>LED light panel underneath the panel title.</li>
+  </ul></dl>
 </dl>
 
 
