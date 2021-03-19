@@ -11,8 +11,8 @@ remain that way.
 Players are in the role of MI6 operatives who have been given the task of figuring out how to use the contents of the case to destroy
 a Russian satellite nuclear weapon.
 
-<br/><br/><div style="text-align: center"><img style="height: 50vh" src="http://twinfeats.com/tf/case1.jpg"/><br/>
-<em>The case mid-build</em></div>
+<br/><br/><img style="height: 50vh" src="http://twinfeats.com/tf/case1.jpg"/><br/>
+<em>Starfield case mid-build</em>
 
 <h2>Game Design</h2>
 The case contains six 3d printed puzzle boxes, six 3d printed game panels, and eight 3d printed cards for the card reader.
