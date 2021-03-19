@@ -79,7 +79,7 @@ Each panel contains an Arduino Nano as the controller, and:
   <dt>Nuclear Safeguard Panel</dt>
   <dl><ul>
   <li>TCS34725 color sensor</li>
-  <li>TCRT5000 IR reflective sensor</li>
+  <li>TCRT5000 IR reflective sensor (triggers the TCS34725 to turn on it's LED and read the color card)</li>
   <li>LED light panel underneath the panel title.</li>
   </ul></dl>
   
