@@ -29,7 +29,7 @@ to this master module to play an MP3 track.
 Here is the list of all pins used by this module, and what they are
 connected to.
 */
-#define PIN_COUNTDOWN_CLK    2
+#define PIN_COUNTDOWN_CLK    2  
 #define PIN_COUNTDOWN_DIO    A3
 #define PIN_LCD_RS           4
 #define PIN_LCD_E            5
@@ -119,6 +119,7 @@ bool checkBrightness(void *t) {
       msg[0] = 'B';
       msg[1] = val;
       bus.send(0, msg, 2);
+      bus.update();
     }
   } else {
     brightnessWaitCount--;
@@ -144,6 +145,39 @@ void gameOver() {
   overridePlay(TRACK_PLAYER_LOSES);
 }
 
+/* -------------------- GAME STATE ---------------------------*/
+/*
+The game is basically a big state machine - every component must be completed
+in order, so these constants define those states and their order
+*/
+
+// case is first supplied power
+#define INITIAL 0
+// This is not case power, but the power state for the game
+#define POWER_OFF 1
+#define POWER_ON 2
+#define MODEM 3
+#define FIREWALL 4
+#define CONTROL_ROOM 5
+#define REACTOR_CORE 6
+
+/*
+The order of the panels and their display names
+*/
+uint8_t GAMES[5] = {POWER_ON, MODEM, FIREWALL, CONTROL_ROOM, REACTOR_CORE};
+const char *gameNames[5] = {"Power", "Modem", "Firewall", "Control room",
+                            "Reactor core"};
+
+uint8_t gameState = INITIAL;  //Starting state
+
+/*
+Initialize the game state
+*/
+void initGameState() {
+  //Nothing to do, but here for consistency
+}
+
+/* -----------------END GAME STATE ----------------------------*/
 /*
  * ----------------Countdown timer ------------------------
  */
@@ -280,7 +314,7 @@ bool waitForMp3(void *t) {
     This is a bit of a hack - when the case is opened by the player intro intro track is played,
     but the clock has not yet started running. So when the track is finished playing, we enable
     the clock to run. This is harmless when the clock is already running and a track finishes
-    pllaying.
+    playing.
     */
     countdownRunning = true;
   }
@@ -306,15 +340,14 @@ This funciton is used to check if there is a track in the queue to play.
 void checkMp3Queue() {
   if (mp3Count > 0) { //there is at least 1 track waiting to play
     int track = mp3Queue[0];  //get the first track in the play queue
-  /*
-  The non-trivial tracks are < 24 or > 30
-  */
-  if (track < 24 || track > 30) {
-    lastTrack = track;  //remember this as the last track requested
-  }
+    /*
+    The non-trivial tracks are < 24 or > 30
+    */
+    if ((track < 8 && track > 12 && track < 24) || track > 30) {
+      lastTrack = track;  //remember this as the last track requested
+    }
     mp3Playing = true;
     mp3Player.playMp3Folder(track); //play the first track in the queue
-//    mp3Player.play(mp3Queue[0]);
     /*
     move all the rest of the tracks down. So track 1 in the queue becomes track 0, etc.
     */
@@ -376,14 +409,31 @@ Initialize the software serial communication for the mp3 player
 SoftwareSerial mp3Serial(PIN_MP3_RX, PIN_MP3_TX); // RX, TX
 
 /*
+Used for debugging, activates all panels for testing.
+Triggered by pressing the replay button before closing the
+case after connecting the batteries.
+*/
+void activateAll() {
+  for (int i=10;i<15;i++) {
+    bus.send(i,"A", 1); //Send the activate message to panel
+    while(bus.update());
+  }
+  playTrack(TRACK_TONE1);
+}
+
+/*
 Called by the replay button debouncer
 */
 void replayLastTrack(int state) {
   /*
   If button was pressed and there is a last track to play
   */
-  if (state == LOW && lastTrack != 0) {
-    playTrack(lastTrack);
+  if (state == LOW) {
+    if (lastTrack != 0) {
+      playTrack(lastTrack);
+    } else if (!countdownRunning && gameState == 0) {
+      activateAll();
+    }
   }
 }
 
@@ -395,7 +445,7 @@ void initMP3Player() {
   mp3Player.begin(mp3Serial);
   mp3Player.volume(15);
   pinMode(PIN_MP3_BUSY, INPUT_PULLUP);
-  mp3Timer.every(23, checkMp3Busy); //check if the mp3 player is playing ever 23 millisecs
+  mp3Timer.every(237, checkMp3Busy); //check if the mp3 player is playing about 4 times a sec
   mp3Volume.every(337, checkMp3Volume); //check the mp3 player volume pot about 3 times a sec
   replayButton.setCallback(replayLastTrack);  //debounce the replay button and tie it to its callback function
 }
@@ -429,6 +479,7 @@ int msgCount = 0; //count of messages in queue
 char msgLine1Queue[10][17]; //queue for line 1 of the LCD
 char msgLine2Queue[10][17]; //queue for line 2 of the LCD
 
+boolean displayingMessage = false;  //used to ensure msg is visible for minimum time
 /*
 Called by the timer to check if there is a waiting message to display.
 */
@@ -459,6 +510,7 @@ Move all the following messages in queue down one slot, so that
 message 1 becomes mesage 0, etc. This basically removes the message
 just displayed (message 0) from the queue.
 */
+    memmove(msgLine1Queue[0], msgLine1Queue[1], 17*9);
     memmove(msgLine2Queue[0], msgLine2Queue[1], 17*9);
     msgCount--;
     /*
@@ -467,6 +519,7 @@ just displayed (message 0) from the queue.
     */
     return msgCount > 0;
   }
+  displayingMessage = false;
   return false; //No more messages to display, so kill the timer by returning false.
 }
 
@@ -479,11 +532,13 @@ void queueMsg(const char *line1, const char *line2) {
   if (msgCount < 10) {
     memcpy(msgLine1Queue[msgCount], line1, 17);
     memcpy(msgLine2Queue[msgCount++], line2, 17);
-    if (msgCount == 1) {  //only one msg, display it now
+    if (!displayingMessage) {  //ok to display this new msg
+      displayingMessage = true;
+      lcdTimer.every(8000, checkMsgQueue); //schedule next msg check
       checkMsgQueue(NULL);
     } else {
       if (lcdTimer.empty()) {
-        lcdTimer.every(5000, checkMsgQueue); //schedule next msg check
+        lcdTimer.every(8000, checkMsgQueue); //schedule next msg check
       } // no else, when the timer pops it will pick up the next msg in queue in checkMsgQueue
     }
   } else {
@@ -496,6 +551,13 @@ void queueMsg(const char *line1, const char *line2) {
   }
  }
 
+void overrideMsg(const char *line1, const char *line2) {
+  msgCount = 0;
+  lcdTimer.cancel();
+  displayingMessage = false;
+  queueMsg(line1, line2);
+}
+
 void initLcd() {
   /*
   Clear out the entire message queue memory with 0s.
@@ -506,39 +568,6 @@ void initLcd() {
 
 /* ---------------END LCD -----------------------------------*/
 
-/* -------------------- GAME STATE ---------------------------*/
-/*
-The game is basically a big state machine - every component must be completed
-in order, so these constants define those states and their order
-*/
-
-// case is first supplied power
-#define INITIAL 0
-// This is not case power, but the power state for the game
-#define POWER_OFF 1
-#define POWER_ON 2
-#define MODEM 3
-#define FIREWALL 4
-#define CONTROL_ROOM 5
-#define REACTOR_CORE 6
-
-/*
-The order of the panels and their display names
-*/
-uint8_t GAMES[5] = {POWER_ON, MODEM, FIREWALL, CONTROL_ROOM, REACTOR_CORE};
-const char *gameNames[5] = {"Power", "Modem", "Firewall", "Control room",
-                            "Reactor core"};
-
-uint8_t gameState = INITIAL;  //Starting state
-
-/*
-Initialize the game state
-*/
-void initGameState() {
-  //Nothing to do, but here for consistency
-}
-
-/* -----------------END GAME STATE ----------------------------*/
 /*
 15 notes in the random "song"
 */
@@ -562,9 +591,6 @@ int nextNote = 0; //Next note index in the song to play
 Called by the timer to play the next note in the song.
 */
 bool playNextNote(void* t) {
-  /*
-  Force the note's track to be played regardless of what else is playing
-  */
   overridePlay(song[nextNote]+TRACK_TONE1);
   nextNote++;
   if (nextNote < NOTES_LENGTH) {  // more notes in song? keep playing
@@ -604,19 +630,24 @@ void commReceive(uint8_t *data, uint16_t len, const PJON_Packet_Info &info) {
   Serial.print("commReceive ");
   Serial.println((char *)data);
   if (isGameOver) return; //ignore all messages if game is over
-  char line1[17], line2[17];
+  char line2[17];
   switch(data[0]) {
     case 'L':  //LCD msg
       queueMsg((char *)&data[1],(char *)&data[18]);
       break;
+    case 'Z':  //Immediate LCD msg
+      overrideMsg((char *)&data[1],(char *)&data[18]);
+      break;
     case 'T':  //Play tone
+      toneTimer.cancel(); //cancel song if it is playing
       overridePlay(data[1]+TRACK_TONE1);
       break;
     case 'P': //Play tone song
+      toneTimer.cancel();
       nextNote = 0;
       toneTimer.every(370, playNextNote);
       break;
-    case 'S': //Store song - when the Modem panel is activated it sens us the random song
+    case 'S': //Store song - when the Modem panel is activated it sends us the random song
       memcpy(song, &data[1], NOTES_LENGTH);
       line2[0] = 0;
       for (int i=0;i<NOTES_LENGTH;i++) {
@@ -700,6 +731,7 @@ void loop() {
   mp3Timer.tick();
   mp3Volume.tick();
   mp3Wait.tick();
+  replayButton.update();
 
   bus.update(); //send any pending PJON messages
   bus.receive(750);  //try to receive a message for .75 ms

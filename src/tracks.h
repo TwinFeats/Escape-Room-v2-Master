@@ -38,3 +38,12 @@
 #define TRACK_TIME_10	28
 #define TRACK_TIME_5	29
 #define TRACK_TIME_1	30
+
+/*
+These are the PJON addresses of the other modules.
+*/
+#define COMM_ID_SWITCHES      10
+#define COMM_ID_MODEM         11
+#define COMM_ID_FIREWALL      12
+#define COMM_ID_CONTROL_ROOM  13
+#define COMM_ID_REACTOR       14
